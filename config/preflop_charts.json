@@ -1,0 +1,12 @@
+{
+  "6-Max": {
+    "RFI": {  // Raise First In (Nadie habló antes que tú)
+      "UTG": ["AA", "KK", "QQ", "JJ", "TT", "99", "AKs", "AKo", "AQs", "AQo"],
+      "BTN": ["22+", "A2s+", "K9s+", "Q9s+", "J9s+", "56s+", "ATo+", "KJo+"]
+    },
+    "Facing_3Bet": { // Alguien te resubió
+      "OOP": ["JJ+", "AKs", "AKo"], // Out of Position (Jugar seguro)
+      "IP": ["TT+", "AQs+", "AKo"]  // In Position (Pagar más)
+    }
+  }
+}

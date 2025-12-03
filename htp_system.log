@@ -1,0 +1,17 @@
+2025-12-02 23:37:41,306 - HTP - INFO - 🚀 HTP Engine HDMI Iniciando...
+2025-12-02 23:37:41,306 - HTP - INFO - 📐 Escala Hardware: X=0.750 Y=0.750
+2025-12-02 23:37:41,307 - HTP - INFO - 🎥 Iniciando Capturadora HDMI...
+2025-12-02 23:37:43,647 - HTP - INFO - 🪟 Ventana Objetivo: 'GGPoker'
+2025-12-02 23:37:43,650 - HTP - INFO - 🔌 Cargando plugins...
+2025-12-02 23:37:43,651 - HTP - INFO - ✅ Plugin cargado: self_check_plugin
+2025-12-02 23:37:43,682 - HTP - INFO - ✅ Plugin cargado: window_detector_plugin
+2025-12-02 23:37:43,773 - HTP - INFO - ✅ Plugin cargado: input_handler
+2025-12-02 23:37:43,773 - HTP - INFO - ✅ Plugin cargado: vision_guard_plugin
+2025-12-02 23:37:43,774 - HTP - INFO - ✅ Plugin cargado: detectar_mesa
+2025-12-02 23:37:43,808 - HTP - INFO - ✅ Plugin cargado: card_detector_plugin
+2025-12-02 23:37:46,681 - HTP - INFO - ✅ Plugin cargado: advanced_ocr_plugin
+2025-12-02 23:37:46,681 - HTP - INFO - ✅ Plugin cargado: main_player_decisions
+2025-12-02 23:37:47,090 - HTP - INFO - ✅ Plugin cargado: HTPGUI
+2025-12-02 23:37:47,091 - HTP - INFO - ✅ Plugin cargado: blinds_detector
+2025-12-02 23:37:47,093 - HTP - INFO - ✅ Plugin cargado: errores
+2025-12-02 23:37:47,198 - HTP - INFO - 🟢 Bucle principal activo

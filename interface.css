@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="synthwave"> <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poker Assistant - Synthwave</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.7.2/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                },
+            },
+            daisyui: {
+                themes: [
+                    {
+                        synthwave: {
+                            // He traducido tus variables CSS a este objeto JS:
+                            "base-100": "oklch(15% 0.09 281.288)",
+                            "base-200": "oklch(20% 0.09 281.288)",
+                            "base-300": "oklch(25% 0.09 281.288)",
+                            "base-content": "oklch(78% 0.115 274.713)",
+
+                            "primary": "oklch(71% 0.202 349.761)",
+                            "primary-content": "oklch(28% 0.109 3.907)",
+
+                            "secondary": "oklch(82% 0.111 230.318)",
+                            "secondary-content": "oklch(29% 0.066 243.157)",
+
+                            "accent": "oklch(75% 0.183 55.934)",
+                            "accent-content": "oklch(26% 0.079 36.259)",
+
+                            "neutral": "oklch(45% 0.24 277.023)",
+                            "neutral-content": "oklch(87% 0.065 274.039)",
+
+                            "info": "oklch(74% 0.16 232.661)",
+                            "info-content": "oklch(29% 0.066 243.157)",
+
+                            "success": "oklch(77% 0.152 181.912)",
+                            "success-content": "oklch(27% 0.046 192.524)",
+
+                            "warning": "oklch(90% 0.182 98.111)",
+                            "warning-content": "oklch(42% 0.095 57.708)",
+
+                            "error": "oklch(73.7% 0.121 32.639)",
+                            "error-content": "oklch(23.501% 0.096 290.329)",
+
+                            // Variables de radio y borde
+                            "--rounded-box": "1rem",
+                            "--rounded-btn": "0.5rem",
+                            "--rounded-badge": "1.9rem",
+                            "--animation-btn": "0.25s",
+                            "--animation-input": "0.2s",
+                            "--btn-focus-scale": "0.95",
+                            "--border-btn": "1px",
+                            "--tab-border": "1px",
+                            "--tab-radius": "0.5rem",
+                        },
+                    },
+                ],
+            },
+        }
+    </script>
+</head>
+<body class="min-h-screen bg-base-100 text-base-content p-4">
+    ```
+
+### Paso 2: Actualiza tus Clases en el `<body>`
+
+Ahora que usas DaisyUI/Tailwind, ya no necesitas escribir CSS manual (`<style>`). Usa las clases directamente en tus elementos HTML para que tomen los colores del tema:
+
+**Ejemplo de cómo transformar tus cajas:**
+
+* **Antes:** `<div class="box" style="background-color: #1e1e1e;">`
+* **Ahora:** `<div class="card bg-base-200 shadow-xl border border-primary">`
+
+**Ejemplo de cómo transformar tus textos:**
+
+* **Antes:** `<h1 style="color: green">`
+* **Ahora:** `<h1 class="text-4xl font-bold text-success">`
+
+### Ejemplo Completo del Body (Modernizado)
+
+Pega esto dentro del `<body>` para ver cómo luce tu tema Synthwave al instante:
+
+```html
+<body class="min-h-screen bg-base-100 flex items-center justify-center font-sans">
+
+    <div class="w-full max-w-md space-y-4">
+
+        <div class="card bg-base-200 shadow-xl border border-primary/20">
+            <div class="card-body text-center p-6">
+                <h2 class="card-title justify-center text-primary-content uppercase tracking-widest text-sm mb-2">
+                    Win Probability
+                </h2>
+
+                <div class="flex justify-center items-baseline gap-2">
+                    <span id="equity" class="text-6xl font-black text-primary drop-shadow-[0_0_10px_rgba(255,0,255,0.5)]">
+                        --%
+                    </span>
+                    <div id="opp_label" class="badge badge-lg badge-neutral font-bold animate-pulse">
+                        ---
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card bg-neutral text-neutral-content shadow-lg">
+            <div class="card-body items-center text-center p-4">
+                <h2 class="text-xs uppercase opacity-70">Sugerencia</h2>
+                <div id="advice" class="text-4xl font-bold text-secondary">
+                    ESPERANDO...
+                </div>
+            </div>
+        </div>
+
+        <button onclick="reportarError()" class="btn btn-error btn-outline w-full gap-2 uppercase tracking-wider font-bold">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            Reportar Fallo
+        </button>
+
+        <div class="text-center text-xs opacity-50 font-mono mt-4">
+            STATUS: <span id="connection" class="text-warning">Conectando...</span>
+        </div>
+
+    </div>
+
+    </body>

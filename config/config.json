@@ -1,0 +1,177 @@
+{
+  "fps_idle": 5,
+  "fps_active": 20,
+  "debug_mode": false,
+  "save_errors": true,
+
+  "capture_method": "dxcam",
+
+  "yolo_model_path": "C:\\HTP\\yoloDS\\runs\\detect\\HTP_v11_final\\weights\\best_openvino_model",
+  "yolo_conf_threshold": 0.4,
+
+  "host": "0.0.0.0",
+  "port": 8000,
+
+  "self_check_interval": 3.0,
+  "window_scan_interval": 2.0,
+  "error_dump_interval": 10.0,
+
+  "preflop_charts_path": "config/preflop_charts.json",
+
+  "allowed_window_keywords": [
+    "holdem",
+    "mesa",
+    "table",
+    "poker",
+    "ciegas",
+    "blinds",
+    "green",
+    "tournament",
+    "freeroll"
+  ],
+  "blocked_window_keywords": [
+    "lobby",
+    "tournament lobby",
+    "manager",
+    "login",
+    "log in",
+    "cashier",
+    "settings"
+  ],
+
+  "preferred_window_regex": "(?i)^(?:ggpoker\\s*-\\NLHP\\s*)?(?:nlh|no[-\\s]*limit\\s*hold[’']?em)\\s*[\\-–]\\s*(?:stakes\\s*:\\s*)?(?:[\\$€¥£]?\\d+(?:[\\.,]\\d+)?\\s*/\\s*[\\$€¥£]?\\d+(?:[\\.,]\\d+)?)(?:\\s*[\\-–]\\s*(?:table|mesa)\\s*\\w+)?(?:\\s*[\\-–]\\s*(?:6\\s*max|6-max|9\\s*max|9-max))?(?:\\s*[\\-–]\\s*(?:fast|zoom|regular|deep|ante))?$",
+
+  "table_layouts": {
+    "default_6max_1080p": {
+      "resolution": [1920, 1080],
+      "hero_seat_index": 5,
+      "seats": [
+        { "index": 0, "x": 0.50, "y": 0.15 },
+        { "index": 1, "x": 0.80, "y": 0.30 },
+        { "index": 2, "x": 0.80, "y": 0.65 },
+        { "index": 3, "x": 0.50, "y": 0.80 },
+        { "index": 4, "x": 0.20, "y": 0.65 },
+        { "index": 5, "x": 0.20, "y": 0.30 }
+      ],
+      "dealer_button_region": [0.47, 0.03, 0.53, 0.13],
+      "community_cards_row": {
+        "y_center": 0.45,
+        "height": 0.10,
+        "first_x": 0.35,
+        "last_x": 0.65
+      },
+      "hero_cards_region": [0.40, 0.72, 0.60, 0.95],
+      "pot_region": [0.42, 0.33, 0.58, 0.42],
+      "hero_stack_region": [0.40, 0.83, 0.60, 0.93],
+      "action_buttons_region": [0.30, 0.88, 0.70, 0.99]
+    },
+    "default_9max_1080p": {
+      "resolution": [1920, 1080],
+      "hero_seat_index": 7,
+      "seats": [
+        { "index": 0, "x": 0.50, "y": 0.10 },
+        { "index": 1, "x": 0.72, "y": 0.15 },
+        { "index": 2, "x": 0.86, "y": 0.30 },
+        { "index": 3, "x": 0.89, "y": 0.55 },
+        { "index": 4, "x": 0.76, "y": 0.75 },
+        { "index": 5, "x": 0.50, "y": 0.82 },
+        { "index": 6, "x": 0.24, "y": 0.75 },
+        { "index": 7, "x": 0.11, "y": 0.55 },
+        { "index": 8, "x": 0.14, "y": 0.30 }
+      ],
+      "dealer_button_region": [0.47, 0.03, 0.53, 0.11],
+      "community_cards_row": {
+        "y_center": 0.44,
+        "height": 0.09,
+        "first_x": 0.33,
+        "last_x": 0.67
+      },
+      "hero_cards_region": [0.42, 0.74, 0.58, 0.95],
+      "pot_region": [0.44, 0.31, 0.56, 0.40],
+      "hero_stack_region": [0.42, 0.84, 0.58, 0.93],
+      "action_buttons_region": [0.30, 0.88, 0.70, 1.00]
+    }
+  },
+
+  "ocr_regions": {
+    "pot_text": {
+      "default_6max_1080p": [0.45, 0.32, 0.55, 0.40],
+      "default_9max_1080p": [0.46, 0.31, 0.54, 0.39]
+    },
+    "hero_stack": {
+      "default_6max_1080p": [0.44, 0.84, 0.56, 0.93],
+      "default_9max_1080p": [0.44, 0.84, 0.56, 0.93]
+    },
+    "seat_stacks": {
+      "default_6max_1080p": {
+        "0": [0.46, 0.17, 0.54, 0.23],
+        "1": [0.70, 0.28, 0.81, 0.35],
+        "2": [0.70, 0.63, 0.81, 0.70],
+        "3": [0.46, 0.74, 0.54, 0.81],
+        "4": [0.19, 0.63, 0.30, 0.70],
+        "5": [0.19, 0.28, 0.30, 0.35]
+      },
+      "default_9max_1080p": {
+        "0": [0.46, 0.13, 0.54, 0.19],
+        "1": [0.63, 0.17, 0.74, 0.24],
+        "2": [0.81, 0.29, 0.92, 0.36],
+        "3": [0.85, 0.50, 0.96, 0.57],
+        "4": [0.73, 0.70, 0.84, 0.77],
+        "5": [0.46, 0.77, 0.54, 0.83],
+        "6": [0.19, 0.70, 0.30, 0.77],
+        "7": [0.05, 0.50, 0.16, 0.57],
+        "8": [0.09, 0.29, 0.20, 0.36]
+      }
+    }
+  },
+
+  "colors_for_gui": {
+    "waiting": "gray",
+    "active": "green",
+    "thinking": "yellow",
+    "alert": "red"
+  },
+
+  "active_table_layout": "default_6max_1080p",
+
+  "ocr": {
+    "languages": ["en"],
+    "gpu": false,
+    "buffer_size": 5,
+    "black_threshold": 5.0
+  },
+
+  "profiles": {
+    "DURISIMO": {
+      "description": "Juega solo manos muy fuertes",
+      "range": "88+, AJs+, KQs, AKo, AQo, AJo"
+    },
+    "REGULAR": {
+      "description": "Rango estandar medio",
+      "range": "55+, A2s+, KTs+, QTs+, JTs, T9s, 98s, 87s, ATo+, KJo+, QJo"
+    },
+    "FLOJO": {
+      "description": "Juega demasiadas manos",
+      "range": "22+, Any Ax, Any Kx, Q5s+, J7s+, T7s+, 54s+, 97o+, 86o+"
+    }
+  },
+
+  "window_title_candidates": [
+    "NLH White",
+    "NLH",
+    "GGPoker",
+    "GG"
+  ],
+  "window_process_candidates": [
+    "GGnet.exe"
+  ],
+  "allow_partial_match": true,
+  "restore_window": false,
+  "window_detection_interval": 0.8,
+  "known_table_window": {
+    "hwnd": 657428,
+    "title": "NLH White 41 - $0.01 / $0.02",
+    "process": "GGnet.exe",
+    "note": "Ejemplo detectado en esta máquina; usado para diagnóstico/manual override"
+  }
+}

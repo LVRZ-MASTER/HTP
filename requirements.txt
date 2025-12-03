@@ -1,0 +1,8 @@
+numpy
+opencv-python
+dxcam
+ultralytics
+easyocr
+pygetwindow
+pyautogui
+Pillow

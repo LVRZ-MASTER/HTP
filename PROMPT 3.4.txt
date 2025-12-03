@@ -1,0 +1,1815 @@
+
+
+
+
+
+
+
+Proyecto: Sistema de asistencia para ganar partidas de poker en salas de juego online.
+
+Es muy importante que no ignores ningun parametro.
+
+Quiero que construyas un programa completamente funcional dedicado exclusivamente al análisis visual pasivo de una mesa de póker que se muestra en mi monitor para determinar siempre la mejor jugada posible con todos los parametros mencionados. El programa construido en Python se llamara "HTP" High Tech Player,  El uso de las librerias incluidas es orientativo y puede ser modificado, actualizado segun sea conveniente. 
+
+El principal objetivo del programa es analizar el juego para determinar la mejor via de accion posible para el jugador en todo momento teniendo en cuenta las probabilidades y estadisticas en el juego y las cartas comunitarias, cartas propias, tamaño de apuesta actuales de cada jugador, tamaño del bote (pot) y stacks visibles. Todo debe hacerse evadiendo cualquier tipo de deteccion que las salas de poker. 
+
+
+El programa debe cumplir con estas condiciones.
+
+Aclaraciones importantes:
+
+“Todo el código de ejemplo de bucles while True con camera.get_latest_frame(), model(frame) y envío directo a WebSocket son versiones históricas y NO se usarán en la versión final. La versión final debe seguir estrictamente la arquitectura de plugins y SharedState descrita en htp.py.” 
+
+Cualquier error propio de de sintaxis o conflictos debe ser reparado y correjido de la mejor manera posible.
+
+Las múltiples versiones de ejemplo son “variantes” y que se tomarán como referencia para implementar una sóla versión unificada.
+
+Todos los bloques leer_dinero_robusto/buffer_ocr deberan aplicarse bajo la sección de "advanced_ocr_plugin.py".
+
+“El detector se entrenará con Ultralytics (YOLOv11), pero se usará un export a OpenVINO.
+
+config.json tendrá una clave yolo_model_path apuntando a la carpeta donde están best.xml y best.bin de OpenVINO.
+vision_core.py debe leer esa ruta desde config y cargar el modelo usando la API adecuada.”
+
+
+
+
+1. Función principal del programa
+
+
+
+Identificar automáticamente la ventana del cliente de póker (puede ser por ejemplo por título, clase, OCR de ventana, heurística visual, etc. o tecnicas hibridas) con libreria OpenCV entre otras, aún cuando esta se mueva durante el juego. Para hacer esto utilizar tambien coordenadas visuales de orientacion de los parametros necesarios.
+
+Determinar siempre las probabilidades de ganar apostando, haciendo check o fold.
+
+Captura optimizada con multi-hilo y buffering para la mas baja latencia posible.
+
+Detect and track of the client window of poker in real-time using hybrid methods (window API + OCR fallback), adapting to window moves.
+
+Actualizar un panel o ventana propia con toda la información detectada.
+
+Integración de visión computacional con aprendizaje profundo para detección y clasificación precisa de cartas y símbolos y demas datos pertinente ya sean imagenes o texto.
+
+Configuración dinámica con interfaz gráfica para calibración visual y ajuste de regiones.
+
+Identificar a los oponentes de manera fehaciente para aplicar Tecnicas "Anti-Bluff" y otros mecanismos para maximizar el rendimiento del analisis del juego.
+
+Imprimir de forma dinamica en todo momento el mejor curso de accion posible para ganar el juego. El Equity el el Dato Psicológico del rival.
+
+Ensure minimal resource usage, stability even under window loss or movement, and automatic scaling to the detected window size.
+
+El usuario debe tener la opcion dentro del GUI de seleccionar la ventana donde esta la mesa de poker que se quiere analizar.
+
+El sotware debe tener una opcion donde se pueda ver el ultimo screenshot tomado, para asi comprobar que todo este funcionando correctamente.
+
+El software debe tener una estructura modular y extensible: tiene interfaces de plugin para módulos de captura, procesamiento y análisis, de modo que más tarde puedas reemplazar/añadir módulos (por ejemplo, un módulo de captura distinto), es decir debe utilizár una estructura basada en plugins o carga dinámica de módulos para lograr que el programa sea escalable, permita agregar nuevas funciones y no requiera modificar el archivo principal.
+
+
+El sistema completo, desde la visión hasta la sugerencia de la jugada, se puede dividir en tres capas, y las dos últimas capas (las que realizan el análisis estratégico) dependen directamente de estas tecnologías:
+
+A) Detección y Reconocimiento (Visión)
+Tecnología: Deep Learning (DL), específicamente YOLO (Redes Neuronales Convolucionales o CNN).
+
+Función Estratégica: Este módulo no analiza la estrategia en sí, sino que proporciona los datos de entrada (el estado del juego) al motor estratégico. Identifica qué cartas hay, cuánto dinero hay en el bote y en las apuestas, y qué posiciones están ocupadas. Sin esta base de datos precisa, no puede haber análisis estratégico.
+
+B) Motor de Evaluación de Manos:
+
+La Estrategia Pre-Flop: "Tablas JSON" (Lookup Tables).
+
+La Estrategia Post-Flop: El "Solver Ligero" Aquí es donde usamos eval7 para simular ser un Solver.
+
+Para que eval7 funcione como un Solver, necesitas definir Rangos de Oponentes.
+
+Tecnología: Matemáticas puras (Combinatoria y Probabilidad) complementadas con ML/DL en sistemas avanzados.
+
+Función Estratégica: Calcula las probabilidades directas (Equity) de ganar o empatar la mano. Y la calificacion psicologica.
+
+Enfoque Clásico (No ML): Utiliza librerías como PokerKit o eval7 para calcular la fuerza de la mano según reglas fijas.
+
+Enfoque Avanzado (ML): Los modelos de ML pueden utilizarse para estimar la mano del oponente basándose en sus patrones de apuesta históricos (Range Estimation), lo que hace que el cálculo de Equity sea mucho más preciso y estratégico.
+
+
+
+C) Agente de Decisión (Análisis Estratégico)
+
+Función Estratégica: Este es el verdadero análisis estratégico. Utiliza modelos entrenados para:
+
+GTO (Game Theory Optimal) y algoritmos CFR (Counterfactual Regret Minimization) son entrenados para encontrar la estrategia de equilibrio (GTO).
+
+Sugerencia de Jugada: Basándose en el estado del juego el modelo sugiere la acción óptima (Fold, Call, Raise) para maximizar el valor esperado (EV) a largo plazo.
+
+
+
+
+2. Herramientas clave:
+
+Se utiliza la librería Ultralytics (que implementa YOLOv11) combinada con OpenCV y Computer Vision entre otras posibilidades para extraer: Cartas comunitarias, cartas propias, tamaños de apuesta actuales, tamaño del bote (pot), stacks visibles, texto relevante en la interfaz.
+
+Se utiliza como base principal de reconocimiento las librerias YOLOv11 pre entrenada + OpenCV.
+
+Se utiliza OpenCV tambien para tareas de visión por computadora como la detección de contornos, la corrección de perspectiva y el preprocesamiento de imágenes (filtrado, umbralización, etc.).
+
+Se utiliza captura de Escritorio (Desktop Duplication API): En lugar de intentar capturar una ventana específica, se puede utilizar la Desktop Duplication API de Windows. Esta API se diseñó para la duplicación de escritorio (ej. para streaming o proyectores) y tiene un nivel de privilegio más alto, a menudo eludiendo las restricciones de captura de ventana individuales, es decir una vez que se obtiene el frame del escritorio, se usa OpenCV/YOLO para recortar solo la parte que corresponde a la ventana del juego (utilizando las coordenadas obtenidas de tu sistema de calibración avanzado).
+
+Se utiliza la libreria PokerKit y eval7 para lógica de juego, simulaciones y evaluación de manos de alta velocidad para la mayoría de variantes de póker.
+
+Además de la probabilidad se requiere un motor que sugiera la acción óptima (CALL, RAISE, FOLD) basándose en la Teoría de Juegos Óptima (GTO) y otros metodos detallados.
+
+
+
+
+
+
+3. Funciones Stealth:
+
+Nombres inocuos, reducción de logs, evitar patrones muy obvios, minimizar llamadas sospechosas, etc.
+
+Evasión de Detección Estática (Análisis de Código):
+
+Para evitar ser identificado por scanners de firmas o análisis de código fuente/binario:
+
+Ofuscación del Código:
+
+Empaquetamiento (Packing) y Carga de Módulos:
+
+Compresión/Empaquetamiento: Utilizar empaquetadores (como UPX o versiones ofuscadas) para comprimir el código ejecutable, lo que dificulta el análisis estático.
+
+Carga de Módulos en Tiempo de Ejecución: Evitar enlazar dinámicamente con librerías (DLLs) comunes del OS. En su lugar, el software resuelve las direcciones de las funciones necesarias (por ejemplo, funciones del Kernel32.dll) manualmente en tiempo de ejecución, cargándolas en memoria de forma dinámica.
+
+Patrones de captura configurables (para no saturar la máquina).
+
+
+
+
+4. Problemas recurrentes:
+
+El problema fundamental es que GGPoker usa renderizado protegido que impide la captura directa.
+
+Anti-scraping
+
+Detectan herramientas que intentan:
+
+Leer la ventana por API estándar
+
+Usar OCR en tiempo real
+
+Capturar FPS muy altos
+
+Abrir handles con permisos inusuales
+
+Windows permite a las apps saber si otros procesos abrieron su ventana con ciertas flags.
+
+Proyectos de código abierto y discusiones de desarrollo (ej. Chromium) muestran que la conducta del compositor y del pipeline de overlays puede cambiar dinámicamente (p. ej. “saltar overlays” cuando se detecta captura), y esas decisiones pueden introducir condiciones de degradación que hay que tratar en tu lógica de ataque.
+
+
+
+
+
+
+
+5. Caracteristicas tecnicas clave:
+
+Variaciones anti-patrón:
+Pequeñas variaciones en coordenadas de captura
+Timing de ejecución impredecible
+Preprocesamiento mejorado:
+CLAHE (Contrast Limited Adaptive Histogram Equalization)
+Filtrado median para reducción de ruido
+Detección de bordes Canny optimizada
+Análisis de contornos y áreas
+Densidad de bordes para detección de presencia
+Pipeline de Procesamiento de Imagen
+Arquitectura de Análisis en Tiempo Real
+
+COMPUTER VISION AVANZADA:
+   - Segmentación semántica con U-Net para identificar regiones de interés
+   - Optical flow para tracking de movimiento de cartas y fichas
+   - Keypoint detection para alineación y perspectiva correction
+   - Data augmentation en tiempo real con GANs para mejorar robustez
+
+
+
+Para lograr una lectura eficiente:
+
+Desactivar el uso de overlays para forzar tu contenido a pasar por software y así capturarlo.
+
+Cambiar el modo del monitor o forzar tearing para romper la ruta segura.
+
+Usa OCR, ML o screen scraping indirecto (ej. captura de subventanas).
+
+
+
+
+
+6. Requisitos de Anti-Detección:
+
+
+Implementar técnicas avanzadas de evasión incluyendo randomización de timing, ocultación completa de operaciones de captura. El sistema debe ser completamente invisible para los sistemas anti-cheat de las salas de póker.
+
+
+6.1. OBJETIVO ESPECÍFICO:
+Desarrollar un sistema de computer vision altamente especializado que supere las protecciones de renderizado del cliente de poker mediante técnicas avanzadas de procesamiento de imagen y machine learning, enfocado en la máxima precisión de lectura.
+
+6.2. CARACTERÍSTICAS CRÍTICAS PARA SUPERAR PROTECCIONES:
+SISTEMA DE CAPTURA DE ALTA FRECUENCIA
+PREPROCESAMIENTO AVANZADO PARA ANTI-ALIASING 
+DETECCIÓN DE ELEMENTOS CON COMPUTER VISION AVANZADA
+
+6.3. ARQUITECTURA DE VISIÓN MEJORADA:
+PIPELINE DE PROCESAMIENTO ROBUSTO
+SISTEMA DE FUSIÓN MULTI-MODAL
+DETECTOR DE ANOMALÍAS Y AUTO-CORRECCIÓN
+
+
+
+7. Componentes del programa:
+
+
+El sistema debe dividirse en módulos bien organizados algunos tambien especificados mediante plugins:
+
+
+7.1. Módulo de detección de ventana
+
+En lo posible debe localizar en tiempo real la ventana de la mesa de juego y no la pantalla main o lobby del cliente de póker.
+
+Debe solicitar al usuario que indique cual es la ventana de la mesa de poker para analizar.
+
+Nunca mostrar analisis simulados.
+
+Debe recuperar sus coordenadas y tamaño.
+
+Si la ventana se mueve, el programa debe adaptarse automáticamente.
+
+
+7.2. Módulo de Gestión de Memoria/GPU (Memory Leaks):
+
+import gc
+# Cada 1000 frames (aprox cada minuto)
+if contador_frames % 1000 == 0:
+    gc.collect() # Forzar al basurero de Python a limpiar RAM suelta
+
+
+7.3. Módulo de sistema de “health check” de visión:
+
+Tu función verificar_vision() como auto-diagnóstico.
+Integrarla como plugin de diagnóstico:
+Detección de pantalla negra (bajo brillo + baja desviación).
+Reporte en la UI: “Estado captura: OK / Pantalla protegida / Ventana minimizada”.
+Detectar fehacientemente protecciones de contenido protegido y reportarlo correctamente al usuario en el GUI.
+
+
+7.4. Modulos adicionales a discrecion.
+
+
+
+8. Código principal: Archivo: "htp.py" (los ejemplos de codigo siempre son como referencia y deben ser optimizados y debugeados:
+
+No debe tener lógica de póker. Su único trabajo es:
+
+Cargar Configuración (config.json).
+
+Cargar Plugins dinámicamente desde la carpeta /plugins.
+
+Iniciar el Bucle Infinito (Orchestrator Loop).
+
+Manejar excepciones globales (para que el bot no se cierre si falla el OCR un segundo).
+
+Debe implementar un Shared State Dictionary (Estado Compartido) thread-safe que pase por todos los plugins en cada ciclo.
+
+Actualmente se asume un solo hilo principal; si se introducen hilos adicionales, debe añadirse sincronización.
+
+
+
+Ejemplo de estructura inicial:
+
+
+
+import asyncio
+import json
+import os
+import sys
+import time
+import logging
+import importlib.util
+import gc
+import traceback
+import inspect
+import psutil
+from typing import Dict, Any, List
+
+# ==========================================
+# 1. SISTEMA DE LOGGING CENTRALIZADO
+# ==========================================
+if not os.path.exists("logs"):
+    os.makedirs("logs")
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(module)s: %(message)s",
+    handlers=[
+        logging.FileHandler("logs/system.log"),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger("HTP_Core")
+
+# ==========================================
+# 2. ESTADO COMPARTIDO (Thread-Safe Bus)
+# ==========================================
+class SharedState(dict):
+    """
+    El Cerebro Central de Datos.
+    Actúa como un bus de comunicación. Los plugins no se llaman entre sí,
+    leen y escriben en este diccionario compartido.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.update({
+            # --- Control del Sistema ---
+            "running": True,           # Interruptor maestro
+            "fps_current": 0.0,        # Monitor de rendimiento real
+            "target_fps": 5,           # Objetivo dinámico (5 idle / 30 active)
+            "errors": [],              # Cola de errores para la GUI
+
+            # --- Capa 1: Entrada ---
+            "window_rect": None,       # (x, y, w, h) de la ventana de póker
+            "window_title": "",        # Título detectado
+            "frame": None,             # Imagen actual procesada (numpy array)
+            "frame_timestamp": 0.0,    # Para sincronización
+
+            # --- Capa 2: Visión (YOLO) ---
+            "detections": [],          # Lista de objetos detectados [{label, conf, box}]
+            "hero_active": False,      # TRIGGER: ¿Es mi turno?
+            "table_size": 6,           # 6-max o 9-max detectado
+            "dealer_pos": None,        # Ubicación del dealer (x, y)
+
+            # --- Capa 3: OCR & Datos ---
+            "ocr_data": {              # Datos leídos del paño
+                "pot": 0.0,
+                "stacks": {},          # {seat_index: amount}
+                "bets": {}             # {seat_index: amount}
+            },
+
+            # --- Capa 4: Estrategia (Cerebro) ---
+            "game_state": {            # Estado lógico reconstruido
+                "my_cards": [],        # Objetos Card
+                "board": [],           # Objetos Card
+                "street": "PREFLOP",
+                "dealer_seat": -1,
+                "blinds": {"sb": 0.0, "bb": 0.0}
+            },
+            "decision": {              # Output final para el usuario
+                "action": "ESPERANDO...",
+                "equity": "--%",
+                "ev": 0.0,
+                "tags": [],            # ["DURISIMO", "3-BET POT"]
+                "color": "gray",       # Para la UI
+                "pot_odds": ""
+            },
+            
+            # Diagnóstico
+            "vision_ok": False,
+            "system_checked": False
+        })
+
+# ==========================================
+# 3. GESTOR DE PLUGINS (Modularidad)
+# ==========================================
+class PluginLoader:
+    def __init__(self, plugin_dir: str = "plugins"):
+        self.plugin_dir = plugin_dir
+        self.plugins: Dict[str, Any] = {}
+
+        # ORDEN CRÍTICO DE EJECUCIÓN (Pipeline)
+        # Definido según Prompt 2.9 para flujo lógico de datos:
+        # Diagnóstico -> Ventana -> Captura -> Visión -> OCR -> Estrategia -> UI
+        self.load_order: List[str] = [
+    		"self_check_plugin",       # 0. Diagnóstico inicial
+    		"window_detector_plugin",  # 1. Localizar ventana (pygetwindow/OCR)
+    		"input_handler",           # 2. Gestionar fuente de captura (DXcam)
+   		"vision_core",             # 3. Detección YOLO (Cartas, Mesa)
+    		"advanced_ocr_plugin",     # 4. Lectura de Dinero (EasyOCR)
+    		"main_player_decisions",   # 5. Lógica de Póker (Eval7 + Tablas)
+    		"HTPGUI",                  # 6. Servidor Web (Interfaz)
+    		"blinds_detector",         # 7. Ciegas desde título
+    		"errores",                 # 8. Debug/diagnóstico
+]
+
+    def load_plugins(self) -> None:
+        """Carga dinámica de módulos sin hardcodear imports."""
+        if not os.path.exists(self.plugin_dir):
+            os.makedirs(self.plugin_dir)
+            init_path = os.path.join(self.plugin_dir, "__init__.py")
+            if not os.path.exists(init_path):
+                open(init_path, "w").close()
+
+        logger.info("🔌 Iniciando carga de plugins...")
+
+        for module_name in self.load_order:
+            try:
+                self._load_single(module_name)
+            except ImportError as e:
+                logger.error(f"❌ Dependencia faltante en '{module_name}': {e}")
+            except Exception as e:
+                logger.error(f"❌ Error cargando '{module_name}': {e}")
+                traceback.print_exc()
+
+    def _load_single(self, module_name: str) -> None:
+        path = os.path.join(self.plugin_dir, f"{module_name}.py")
+        if not os.path.exists(path):
+            # Warning suave, porque algunos plugins pueden no estar listos aún
+            logger.warning(f"⚠️ Plugin no encontrado: {path} (Saltando)")
+            return
+
+        # Carga dinámica
+        spec = importlib.util.spec_from_file_location(module_name, path)
+        if spec is None or spec.loader is None:
+             logger.error(f"❌ No se pudo crear spec para {module_name}")
+             return
+             
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        spec.loader.exec_module(module)
+
+        # Instanciación automática de la clase principal
+        # Busca una clase que termine en 'Plugin' (ej: VisionCorePlugin)
+        found = False
+        for attr_name in dir(module):
+            attr = getattr(module, attr_name)
+            if (
+                isinstance(attr, type)
+                and attr_name.endswith("Plugin")
+                and attr_name != "BasePlugin"
+            ):
+                try:
+                    self.plugins[module_name] = attr()
+                    logger.info(f"✅ Plugin activo: {module_name} -> {attr_name}")
+                    found = True
+                    break
+                except Exception as e:
+                     logger.error(f"❌ Error instanciando {attr_name}: {e}")
+
+        if not found:
+            logger.warning(f"⚠️ No se encontró clase '...Plugin' en {module_name}")
+
+# ==========================================
+# 4. ORQUESTADOR PRINCIPAL (Core Loop)
+# ==========================================
+class HTPOrchestrator:
+    def __init__(self):
+        self.state = SharedState()
+        self.loader = PluginLoader()
+        self.config = self._load_config()
+
+        # Crear estructura de carpetas necesaria
+        for d in ["logs", "config", "plugins", "errores"]:
+            os.makedirs(d, exist_ok=True)
+
+    def _load_config(self) -> Dict[str, Any]:
+        """Carga configuración resistente a fallos."""
+        default_conf: Dict[str, Any] = {
+            "fps_idle": 5,
+            "fps_active": 30,
+            "debug_mode": False,
+            "save_errors": True
+        }
+        try:
+            with open("config/config.json", "r") as f:
+                data = json.load(f)
+                default_conf.update(data)
+                return default_conf
+        except Exception:
+            logger.warning("config.json no encontrado. Usando defaults.")
+            return default_conf
+
+    async def start(self) -> None:
+        logger.info("🚀 HTP Engine v3.0 Iniciando...")
+
+        # 1. Cargar Plugins
+        self.loader.load_plugins()
+
+        # 2. Setup Inicial (Configuración de cada plugin)
+        for name, plugin in self.loader.plugins.items():
+            setup_fn = getattr(plugin, "setup", None)
+            if setup_fn:
+                logger.info(f"⚙️ Configurando {name}...")
+                try:
+                    if inspect.iscoroutinefunction(setup_fn):
+                        await setup_fn(self.state, self.config)
+                    else:
+                        setup_fn(self.state, self.config)
+                except Exception as e:
+                    logger.error(f"❌ Error en setup de {name}: {e}")
+
+        # 3. Arrancar Bucle
+        await self.main_loop()
+
+    async def main_loop(self) -> None:
+        logger.info("🟢 Bucle Principal Iniciado")
+        frame_count = 0
+
+        while self.state["running"]:
+            loop_start = time.time()
+
+            # --- A. DETERMINAR MODO DE ENERGÍA ---
+            # Si 'hero_active' es True (detectado por vision_core), subimos a 30 FPS.
+            # Si no, bajamos a 5 FPS para ahorrar CPU y ser "stealth".
+            is_active = self.state.get("hero_active", False)
+            target_fps = self.config["fps_active"] if is_active else self.config["fps_idle"]
+            self.state["target_fps"] = target_fps
+
+            # --- B. PIPELINE DE EJECUCIÓN ---
+            # Ejecutamos los plugins en el orden estricto de load_order
+            for name in self.loader.load_order:
+                plugin = self.loader.plugins.get(name)
+                if not plugin:
+                    continue
+
+                # Optimización: Algunos plugins pueden saltarse si estamos en Idle
+                # El OCR y la Lógica de Juego solo corren si es mi turno
+                if (not is_active) and name in ["advanced_ocr_plugin", "main_player_decisions"]:
+                    continue
+
+                try:
+                    # Inyección de Dependencia: Pasamos el Estado Compartido
+                    if hasattr(plugin, "process"):
+                        res = plugin.process(self.state)
+                        if inspect.iscoroutine(res):
+                            await res
+                            
+                except Exception as e:
+                    # Resiliencia: Si un plugin falla, el bot NO muere.
+                    err_msg = f"Error en {name}: {str(e)}"
+                    # Evitamos inundar el log con el mismo error 30 veces por segundo
+                    if not self.state["errors"] or self.state["errors"][-1] != err_msg:
+                        logger.error(err_msg)
+                        self.state["errors"].append(err_msg)
+                        # Limitar tamaño de la cola de errores
+                        if len(self.state["errors"]) > 100:
+                            self.state["errors"].pop(0)
+                    
+                    if self.config.get("debug_mode"):
+                        traceback.print_exc()
+
+            # --- C. GESTIÓN DE MEMORIA (GC) ---
+            frame_count += 1
+            if frame_count % 500 == 0:
+                gc.collect()  # Limpieza forzada cada ~X ciclos
+                # Health Check básico de RAM
+                process = psutil.Process(os.getpid())
+                mem = process.memory_info().rss / 1024 / 1024 # MB
+                if mem > 2000: # Si usa más de 2GB
+                     logger.warning(f"⚠️ Consumo de RAM alto: {mem:.0f}MB. Forzando limpieza...")
+                     gc.collect()
+
+            # --- D. CONTROL DE LATENCIA (Sleep) ---
+            elapsed = time.time() - loop_start
+            self.state["fps_current"] = round(1.0 / elapsed, 1) if elapsed > 0 else 0.0
+
+            sleep_time = (1.0 / target_fps) - elapsed
+            if sleep_time > 0:
+                await asyncio.sleep(sleep_time)
+            else:
+                # Ceder control mínimo para IO / otros tasks
+                await asyncio.sleep(0.001)
+
+# --- PUNTO DE ENTRADA ---
+if __name__ == "__main__":
+    bot = HTPOrchestrator()
+    try:
+        # Fix para Windows Asyncio (Importante para Uvicorn)
+        if sys.platform == "win32":
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
+        asyncio.run(bot.start())
+
+    except KeyboardInterrupt:
+        logger.info("🛑 Deteniendo HTP...")
+    except Exception as e:
+        logger.critical(f"🔥 ERROR FATAL: {e}")
+        traceback.print_exc()
+        input("Presiona Enter para salir...")
+
+
+
+
+
+
+
+
+
+
+9. Archivo de configuración "config.json":
+
+Con los parámetros antes mencionados sin olvidar las coordenadas de todos los elementos importantes de las mesas.
+
+
+
+
+
+
+10. Script de compilación PyInstaller
+
+Archivo: htp.spec, que incluya:
+
+config.json
+
+Pathex correctos
+
+Modo ventana o consola seleccionable
+
+Compatibilidad con compilación de un solo archivo (opcional)
+
+
+
+11. Script "instalar.bat". Debe crear la estructura.
+
+HTP/
+├── htp.py                 # Core (Carga plugins y corre el loop)
+├── ... (archivos raíz)
+└── plugins/
+    ├── __init__.py
+    ├── input_handler.py           # DXcam / Detección de Ventana
+    ├── vision_core.py             # YOLO + Lógica de Mesa (Dealer/Cartas)
+    ├── advanced_ocr_plugin.py     # EasyOCR + Limpieza de texto
+    ├── HTPGUI.py                  # FastAPI + WebSocket + HTML/CSS
+    ├── window_detector_plugin.py  # Mira la ventana.
+    ├── blinds_detector.py
+    ├── errores.py
+    ├── main_player_decisions.py   # (que use PreflopBrain + PostflopBrain + PlayerProfile)
+    └── self_check_plugin.py       # (autodiagnóstico con verificar_vision, check de dependencias, etc.)
+
+
+
+12. Archivo de instalacion HTP.spec
+
+
+13. Optimización
+
+El programa debe estar optimizado para:
+
+Baja latencia (<150 ms por frame)
+
+Buen funcionamiento en resoluciones 2K
+
+Procesamiento OCR eficiente
+
+Estabilidad ante perdida de ventana
+
+
+14. Resultado final esperado
+
+Generar un proyecto listo para:
+
+Compilar con PyInstaller
+
+Configurado automaticamente mediante JSON
+
+Que utilice como metodo principal de reconocimiento las librerias YOLOv11 + OpenCV.
+
+Escalar automáticamente a la ventana visible
+
+Reescribir la clase WindowDetector de Python para que detecte la ventana de un cliente de poker aunque el título cambie dinámicamente priorizando el metodo Regex, o haciendo OCR de ventana estos deben:
+
+Registrar todas las ventanas encontradas para depuración.
+
+Mantener un fallback por OCR que busque palabras clave en pantalla (case-insensitive) y devuelva las coordenadas del rectángulo de la ventana.
+
+Ser thread-safe y actualizar window_rect correctamente.
+
+Incluir boton para inicio del analisis y pausa. 
+
+Módulo de autodiagnóstico interactivo, donde el software: verifica dependencias y configuraciones, detecta fallas, le pregunta al usuario si funciona correctamente, sugiere o aplica soluciones automáticas.
+
+Panel GUI moderno y reactivo con gráficos en tiempo real, historial de manos, alertas y exportación de datos updated live.
+
+El plugin de api de GEMINI IA mas adelante sera actualizado para el uso de APIs.
+
+El programa debe estar ubicado en "C:\HTP".
+
+Ejemplos de estructura inicial (se puede ampliar a conveniencia):
+
+Ejemplo inicial:
+
+
+
+Ejemplo expandido posteriormente con plugins:
+
+HTP/
+├── htp.py                # Archivo principal
+├── config.json           # Configuración principal
+├── htp.spec              # Configuración PyInstaller
+├── build.bat             # Script de compilación
+├── install_dependencies.bat
+├── icoRGB.ico            # Icono de la aplicación
+├── interface.css         # Theme de la interfaz web.
+├── README.txt            # Documentación
+│
+├── plugins/              # Directorio principal de plugins
+│   ├── __init__.py       # Inicializador de plugins
+│   ├── core/             # Plugins del sistema core
+│   │   ├── __init__.py
+│   │   ├── window_detector_plugin.py
+│   │   ├── advanced_ocr_plugin.py
+│   │   ├── main_player_decisions.py
+│   │   ├── card_detector_plugin.py
+│   │   ├── blinds_detector.py
+│   │   ├── errores.py
+│   │   └── poker_ai_plugin.py
+│   ├── capture/          # Plugins de captura
+│   │   ├── __init__.py
+│   │   ├── screen_capture.py
+│   │   └── window_capture.py
+│   ├── analysis/         # Plugins de análisis
+│   │   ├── __init__.py
+│   │   ├── hand_analyzer.py
+│   │   ├── odds_calculator.py
+│   │   └── strategy_engine.py
+│   └── interface/        # Plugins de interfaz
+│       ├── __init__.py
+│       ├── modern_gui.py
+│       └── overlay_manager.py
+│
+├── logs/                 # Logs del sistema
+│   ├── system.log
+│   ├── detection.log
+│   └── performance.log
+│
+└── config/              # Configuraciones adicionales
+    ├── preflop_charts.json
+    ├── player_profiles.json
+    └── table_templates.json
+
+HTP\yoloDS\runs\detect\HTP_v11_final\weights\best_openvino_model\
+
+
+15. Enviroment (y software ya instalado para evitar conflictos y NO PEDIR QUE SE REINSTALE NO PEDIR CONFIRMACION):
+
+Windows 10
+
+Archivos y carpetas ya preparados:
+
+HTP/
+├── icoRGB.ico            # Icono de la aplicación
+├── interface.css         # Theme de la interfaz web.
+└── config/              # Configuraciones adicionales
+    └── preflop_charts.json
+
+HTP\yoloDS\runs\detect\HTP_v11_final\weights\best_openvino_model\best.xml
+
+
+
+
+
+# Si no está en las listas de arriba, asumiremos que es una carta.
+
+
+
+
+
+
+
+
+
+
+
+16. Ejemplo a mejorar de "plugins/blinds_detector.py":
+
+
+
+La mayoría de los clientes de póker ponen el nivel de ciegas en la barra de título de la ventana (ej: "NLH $0.50/$1.00 - Table 1"). Pero no confundir con la ventana del lobby que puede utilizar el nombre del cliente de poker).
+
+import pygetwindow as gw
+import re
+
+class BlindsDetector:
+    def __init__(self):
+        # Regex para encontrar patrones de dinero: "$0.50 / $1.00" o "100/200"
+        # Soporta: $, €, ¥, £, y números con punto o coma decimal
+        self.patron_ciegas = r"(?:[\$€¥£C]|BB)?\s*(\d+(?:[.,]\d+)?)\s*/\s*(?:[\$€¥£C]|BB)?\s*(\d+(?:[.,]\d+)?)"
+        
+        # Palabras clave para IGNORAR (Falsos positivos como el Lobby)
+        self.lista_negra = ["Lobby", "Tournament", "Torneo", "Log In", "Manager"]
+
+    def buscar_ventana_mesa(self):
+        """
+        Escanea todas las ventanas visibles.
+        Retorna: (título_ventana, small_blind, big_blind)
+        """
+        todas_ventanas = gw.getAllTitles()
+        
+        for titulo in todas_ventanas:
+            # 1. Filtro rápido: Ignorar ventanas vacías o del sistema
+            if not titulo or titulo == "": continue
+            
+            # 2. Filtro de Lista Negra (Evitar el Lobby explícitamente si dice "Lobby")
+            if any(palabra in titulo for palabra in self.lista_negra):
+                continue
+
+            # 3. Búsqueda del Patrón de Ciegas (El corazón de la lógica)
+            # Buscamos algo que parezca "X / Y" numéricamente
+            match = re.search(self.patron_ciegas, titulo)
+            
+            if match:
+                try:
+                    # Extraer los grupos del regex
+                    sb_str = match.group(1).replace(',', '.') # Normalizar 0,50 a 0.50
+                    bb_str = match.group(2).replace(',', '.')
+                    
+                    sb = float(sb_str)
+                    bb = float(bb_str)
+                    
+                    # Filtro de cordura: La ciega grande debe ser mayor o igual a la chica
+                    if bb >= sb:
+                        return titulo, sb, bb
+                        
+                except ValueError:
+                    continue # Si falla la conversión, no era una mesa válida
+
+        return None, 0.0, 0.0
+
+# --- BLOQUE DE PRUEBA (Para que lo corras ahora y verifiques) ---
+if __name__ == "__main__":
+    detector = BlindsDetector()
+    print("🔍 Escaneando ventanas en busca de mesas de póker...")
+    
+    titulo, sb, bb = detector.buscar_ventana_mesa()
+    
+    if titulo:
+        print(f"\n✅ MESA ENCONTRADA:")
+        print(f"   Título: '{titulo}'")
+        print(f"   Small Blind: {sb}")
+        print(f"   Big Blind:   {bb}")
+        print(f"   Stack de 100BB sería: {bb * 100}")
+    else:
+        print("\n❌ No se detectaron mesas activas.")
+        print("   Asegúrate de que la ventana de la mesa (no el lobby) esté abierta.")
+
+
+
+Si esto no tiene exito debemos como manera secundaria definir de manera manual el importe desde GUI.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+17. Descripcion y funciones del plugin "vision_core.py":
+
+
+
+Se utiliza sólo para detección YOLO + clasificación de objetos (cartas, dealer, regiones OCR, etc). Escribe resultados en SharedState["detections"] y quizá SharedState["game_state"]["my_cards"/"board"].
+
+
+Para cumplir su funcion "vision_core.py" se hara cargo de las siguientes definiciones ZONAS_EXCLUSIVAS_9MAX, detectar_formato_mesa, detectar_mesa_y_dealer, ordenar_asientos_por_angulo
+
+Ejemplos a mejorar unificar e implementar de vision_core.py:
+
+
+Codigos y datos relativos a los datos obtenidos del OCR de la mesa:
+
+import math
+
+# --- CONFIGURACIÓN DE ZONAS 9-MAX (Normalizadas 0.0 a 1.0) ---
+# Estas zonas representan las esquinas inferiores "apretadas" típicas de 9-max.
+# Si detectamos un stack o asiento vacío aquí, es mesa de 9.
+ZONAS_EXCLUSIVAS_9MAX = [
+    # x_min, y_min, x_max, y_max
+    (0.12, 0.65, 0.22, 0.85), # Asiento extra izquierda
+    (0.78, 0.65, 0.88, 0.85)  # Asiento extra derecha
+]
+
+def calcular_distancia(p1, p2):
+    return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
+
+def detectar_formato_mesa(puntos_interes, ancho_img, alto_img):
+    """
+    Analiza si algún objeto cae en zonas exclusivas de 9-max.
+    puntos_interes: lista de tuplas (x_centro, y_centro)
+    """
+    for x, y in puntos_interes:
+        # Normalizar a 0.0-1.0
+        x_norm = x / ancho_img
+        y_norm = y / alto_img
+        
+        for (x1, y1, x2, y2) in ZONAS_EXCLUSIVAS_9MAX:
+            if x1 < x_norm < x2 and y1 < y_norm < y2:
+                return 9 # Es mesa de 9
+    return 6 # Por defecto asumimos 6 (o 3, que usa el mismo layout)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+18. Ejemplo a mejorar del modulo de toma de desiciones "main_player_decisions.py":
+
+“El módulo main_player_decisions.py implementará:
+
+Una clase PreflopBrain con la siguiente interfaz canónica:
+__init__(ruta_json: str) – ruta se lee desde config.json.
+normalizar_mano(cartas: list[eval7.Card]) -> str
+obtener_consejo(mis_cartas, posicion_hero, accion_previa) donde accion_previa es 'NADIE' o 'RAISE'.
+Una clase PostflopBrain con:
+calcular_equity(mis_cartas, board, perfil_rival: str) -> float
+obtener_consejo(equity, bote_total, costo_call) -> str
+Una clase PlayerProfile tal como se muestra en el ejemplo, sin cambios de firma.”
+
+Las múltiples versiones de ejemplo son “variantes” y que se tomarán como referencia para implementar una sóla versión unificada.
+
+
+El Módulo de Toma de Decisiones es el "main_player_decisions.py" que conecta los ojos (YOLO) con la acción. No es un bloque monolítico, sino una tubería de procesamiento (pipeline) de 4 etapas.
+
+El flujo de datos debe ser unidireccional:
+
+Datos Crudos (YOLO) + Ciegas + Normalización + Matemáticas + Ajuste Psicológico = Decisión Final.
+
+A) El Normalizador de Estado (State Normalizer)
+
+YOLO te da coordenadas y OCR te da números "sucios". Este componente limpia y traduce todo al "idioma del póker".
+
+Input: pot=35.50, stack=100, blind_value=0.50.
+
+Función: Convierte dinero a Ciegas Grandes (BB) y determina la posición relativa.
+
+Output:
+
+pot_bb: 71 BB
+
+street: "PREFLOP", "FLOP", "TURN" o "RIVER".
+
+B) El Motor Pre-Flop (Tablas de Rangos)
+
+El póker se juega muy diferente antes y después de las cartas comunitarias.
+
+Lógica: No se calcula equity compleja. Se usan Tablas de Rangos (Lookup Tables).
+
+Funcionamiento:
+
+Si street == "PREFLOP":
+
+Busca en un archivo Excel/JSON: "Tengo AKs en posición UTG. ¿Qué dice la tabla?"
+
+Respuesta: "Raise a 3BB".
+
+C) El Motor Post-Flop (Calculadora Matemática):
+
+Aquí entra eval7 o PokerKit. Se activa cuando hay cartas en la mesa.
+
+Cálculo 1 (Equity): ¿Qué probabilidad tengo de ganar? (Ej. 60%).
+Cálculo 2 (Pot Odds): ¿Cuánto me cuesta pagar? (Ej. Tengo que poner 10 en un bote de 20: necesito 33% de equity).
+Cálculo 3 (EV - Valor Esperado): EV = (\%Win \times \$Ganancia) - (\%Lose \times \$Costo).
+
+D) La Capa Explotativa:
+
+def logica_postflop(self, state, perfil_rival):
+        """
+        state: Datos de la mesa (cartas, dinero)
+        perfil_rival: "DURISIMO", "REGULAR", "FLOJO" (Viene del Tracker)
+        """
+        
+        # Calcular Pot Odds (Matemática Pura)
+        # Cuánto tengo que poner / (Bote total + Lo que pongo)
+        costo_call = state['amount_to_call']
+        bote_total = state['pot_total'] + costo_call
+        
+        if bote_total == 0: pot_odds = 0
+        else: pot_odds = costo_call / bote_total
+        
+        # Calcular Equity Base (Matemática Pura - eval7/PokerKit)
+        # Probabilidad real de que tus cartas ganen al showdown
+        equity_real = calcular_equity(state['my_cards'], state['board_cards'])
+        
+        # Generar la Sugerencia Matemática (GTO Base)
+        if equity_real > pot_odds:
+            # Si tengo más probabilidad de ganar que el precio del bote
+            if equity_real > 0.70:
+                sugerencia = "RAISE / ALL-IN"
+            else:
+                sugerencia = "CALL"
+        else:
+            sugerencia = "FOLD"
+            
+        # Empaquetar para el Frontend.
+        # Enviamos los datos separados: La Verdad Matemática + La Opinión Psicológica
+        return {
+            "action_math": sugerencia,          # "CALL"
+            "equity_math": f"{equity_real:.1%}", # "42.5%" (Puro)
+            "pot_odds": f"{pot_odds:.1%}",       # "33.0%" (Precio)
+            "opponent_tag": perfil_rival         # "DURISIMO" (Contexto)
+        }
+
+
+Integracion del factor de las Ciegas:
+
+Se debe convertir todo el dinero a BBs antes de tomar decisiones.
+
+Estrategias de mejora en la toma de desiciones:
+
+Tecnicas "Anti-Bluff": El programa debe tener memoria en la partida es decir debe recordar a los oponentes y su comportamiento, por ejemplo si determinado oponente bluffea constantemente esto debe ser tenido en cuenta para la desicion de la proxima jugada para esta funcion debe aplicarse el concepto de "Captura Única" (The One Snapshot) es por eso que debe detectarse el evento "nueva mano" o usar la libreria imagehash (La alternativa ligera) para esto debemos usar un Diccionario en Python para vincular Nombre -> Estadísticas. Si el OCR detecta un nombre nuevo en la misma silla $\rightarrow$ Borra las estadísticas viejas de esa silla y empieza a contar de cero para el nuevo tipo. Se realiza de la siguiente forma en 3 pasos:
+
+A) Individualizar oponente:
+import easyocr
+reader = easyocr.Reader(['en']) # Cargar modelo en memoria (hazlo una vez al inicio)
+
+# Diccionario de la sesión actual
+# Key: Número de Silla (0-8), Value: Nombre del Jugador
+ocupantes_actuales = {} 
+
+def verificar_jugadores(frame, coordenadas_asientos):
+    for silla_id, (x, y, w, h) in coordenadas_asientos.items():
+        
+        # 1. Recortar el área del nombre (ROI)
+        # Ajusta estos valores según tu mesa
+        roi_nombre = frame[y-30:y, x:x+w] 
+        
+        # 2. Leer el nombre
+        resultado = reader.readtext(roi_nombre, detail=0)
+        nombre_detectado = resultado[0] if resultado else "Desconocido"
+        
+        # 3. Verificar cambios
+        nombre_anterior = ocupantes_actuales.get(silla_id)
+        
+        if nombre_detectado != nombre_anterior:
+            print(f"Cambio en silla {silla_id}: Sale {nombre_anterior}, Entra {nombre_detectado}")
+            
+            # REINICIAR ESTADÍSTICAS para esta silla
+            base_de_datos_stats[silla_id] = {"manos": 0, "vpip": 0}
+            
+            # Actualizar ocupante
+            ocupantes_actuales[silla_id] = nombre_detectado
+
+B) Sistema de Perfilado en Tiempo Real (Session-Based Profiling) mediante Lógica Heurística Dinámica el script debe funcionar con un sistema de Suposiciones Base (Baseline) que se ajustan rápidamente.
+
+Mano 0: El bot asume que el rival es un "Jugador Promedio" (ni muy loco, ni muy roca). Usa tablas estándar.
+
+Mano 10: El bot ya vio algunas acciones. Empieza a desviarse del promedio.
+
+Mano 30: El bot ya tiene un perfil "de sesión" sólido para ese jugador.
+
+class PlayerProfile:
+    def __init__(self):
+        self.manos_vistas = 0
+        self.veces_entro = 0  # VPIP
+        self.veces_subio = 0  # PFR
+        self.etiqueta = "UNKNOWN" # Desconocido
+
+    def actualizar(self, accion):
+        self.manos_vistas += 1
+        if accion == "call" or accion == "raise":
+            self.veces_entro += 1
+        if accion == "raise":
+            self.veces_subio += 1
+        
+        # EL CEREBRO: Clasificación en tiempo real
+        self.clasificar_jugador()
+
+    def clasificar_jugador(self):
+        # 1. Si tengo pocos datos, no opino
+        if self.manos_vistas < 10:
+            self.etiqueta = "UNKNOWN"
+            return
+
+        # 2. Cálculo simple
+        vpip = (self.veces_entro / self.manos_vistas) * 100
+        
+        # 3. Reglas Heurísticas (Aquí ajustas tu estrategia)
+        if vpip > 60:
+            self.etiqueta = "FLOJO" # Juega demasiadas manos
+        elif vpip < 15:
+            self.etiqueta = "DURISIMO" # Solo juega manos premium
+        else:
+            self.etiqueta = "REGULAR"
+
+C) Imprimir el resultado del Dato Psicológico del rival: EJ "Dato Psicológico (Rival: DURISIMO)" Además de calcular el equity.
+
+
+D) Manejar el reinicio (Identificacion):
+
+Para que esto funcione en una sesión donde la gente entra y sale:
+
+En cada nueva mano, verificar si el nombre/avatar en la "Silla 3" (por ejemplo) es el mismo que en la mano anterior.
+
+Si es distinto: tracker.reset("Silla_3"). Se borra todo y empieza como "UNKNOWN".
+
+Si es igual: tracker.actualizar(...). Sigue sumando datos.
+
+
+Ejemplos codificados:
+
+
+# --- LÓGICA ESPACIAL (POST-PROCESAMIENTO) ---
+    
+    # Refinar por Conteo (¿Cuántos lugares activos veo?)
+    # puntos incluye: stacks detectados + asientos vacíos detectados
+    cantidad_lugares = len(puntos)
+    
+    if es_geometria_grande:
+        # Es una mesa ovalada. Puede ser de 8 o 9.
+        # Si detectamos 9 lugares, es 9. Si detectamos 8 o menos, asumimos 8 
+        # (o 9 con gente oculta, pero para el label usaremos 8).
+        if cantidad_lugares >= 9:
+            return 9
+        return 8
+    else:
+        # Es una mesa hexagonal/cuadrada. Puede ser de 2, 4 o 6.
+        if cantidad_lugares <= 4 and cantidad_lugares > 0:
+            return 4
+        return 6
+
+
+# --- LÓGICA DE DECISIÓN Y ESTADOS ---
+
+        # Variable clave: ¿Tengo mano para jugar?
+        # (Requiere 2 cartas detectadas y que NO sean cartas grises de fold)
+        tengo_cartas = len(mis_cartas_obj) >= 2
+        
+        # --- ESTADO 0: MODO ESPERA (Standby) ---
+        if not tengo_cartas:
+            # Si no tengo cartas, limpiamos la memoria y esperamos.
+            # Esto previene cálculos inútiles entre manos.
+            memoria["equity"] = "--%"
+            memoria["advice"] = "..."
+            memoria["tag"] = "---"
+            
+            estado_global.update({
+                "equity": "--%",
+                "advice": "ESPERANDO MANO ⏳",
+                "opponent_type": "Mesa en Pausa",
+                "status_color": "gray" # Puedes usar esto en CSS para ponerlo gris
+            })
+            
+            # Pequeña pausa extra para ahorrar CPU mientras esperamos cartas
+            await asyncio.sleep(0.1) 
+            
+        # --- ESTADO 1: ACCIÓN (Es mi turno) ---
+        elif es_mi_turno and tengo_cartas:
+            
+            # Detectar formato (4, 6, 8, 9)
+            tamanio = detectar_formato_mesa(objetos_mesa, frame.shape[1], frame.shape[0])
+            
+            # Calcular Matemática
+            equity = calcular_equity(mis_cartas_obj, board_obj)
+            
+            # Guardar en Memoria
+            memoria["equity"] = f"{equity*100:.1f}%"
+            
+            if equity > 0.6: memoria["advice"] = "RAISE 🟢"
+            elif equity > 0.4: memoria["advice"] = "CALL 🟡"
+            else: memoria["advice"] = "FOLD 🔴"
+            
+            memoria["tag"] = f"{tamanio}-Max"
+
+            # Enviar a Tablet
+            estado_global.update({
+                "equity": memoria["equity"],
+                "advice": memoria["advice"],
+                "opponent_type": f"{memoria['tag']} (TU TURNO)",
+                "status_color": "green" # Verde para acción
+            })
+
+        # --- ESTADO 2: SEGUIMIENTO (No es mi turno, pero tengo cartas) ---
+        elif not es_mi_turno and tengo_cartas:
+            
+            # Mantenemos la info en pantalla para que pienses
+            estado_global.update({
+                "equity": memoria["equity"], 
+                "advice": f"Último: {memoria['advice']}",
+                "opponent_type": "Esperando rivales...",
+                "status_color": "yellow" # Amarillo para espera activa
+            })
+            
+        # Enviar al WebSocket
+        await websocket.send_json(estado_global)
+
+
+
+
+    # ENCONTRAR AL DEALER (Vinculación)
+    # Buscamos qué stack de jugador está más cerca del botón de dealer
+    jugador_dealer_index = -1
+    
+    if posicion_dealer and posiciones_stacks:
+        distancia_minima = float('inf')
+        
+        for i, pos_stack in enumerate(posiciones_stacks):
+            dist = calcular_distancia(posicion_dealer, pos_stack)
+            if dist < distancia_minima:
+                distancia_minima = dist
+                jugador_dealer_index = i # Este índice corresponde a la lista posiciones_stacks
+        
+        # Opcional: Dibujar línea en debug o imprimir
+        # print(f"El Dealer está en el Stack #{jugador_dealer_index}")
+
+    # --- SALIDA DE DATOS ---
+    if len(mis_cartas) >= 2:
+        print(f"--- NUEVA LECTURA ---")
+        print(f"Modo: {modo_juego} | Jugadores detectados: {cant_jugadores_activos}")
+        print(f"Mis cartas: {mis_cartas}")
+        print(f"Board: {cartas_mesa}")
+        print(f"Dealer detectado: {'SÍ' if posicion_dealer else 'NO'}")
+        
+        # Aquí llamas a tu motor de decisión pasando estos datos...
+
+
+    # Detectar tamaño del bote y cantidad de dinero o fichas de los jugadores:
+
+
+import cv2
+import numpy as np
+import re
+import easyocr
+
+# Instancia global (para no cargarla en cada frame)
+reader = easyocr.Reader(['en'], gpu=False) # True si usas NVIDIA
+
+def preprocesar_imagen_dinero(recorte):
+    """
+    Transforma un recorte sucio de la mesa en una imagen ideal para OCR.
+    """
+    if recorte.size == 0: return None
+
+    # 1. Upscaling (Agrandar x3)
+    # Usamos INTER_CUBIC que es mejor para mantener bordes suaves en texto
+    h, w = recorte.shape[:2]
+    img = cv2.resize(recorte, (w*3, h*3), interpolation=cv2.INTER_CUBIC)
+
+    # 2. Convertir a Escala de Grises
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    # 3. Thresholding (Binarización Inteligente)
+    # Otsu encuentra automáticamente el punto de corte óptimo entre texto y fondo
+    _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+    # 4. Inversión (Texto Negro sobre Blanco)
+    # Verificamos si el fondo es negro (común en poker). Si es así, invertimos.
+    # Contamos píxeles blancos. Si hay pocos, es texto blanco sobre negro -> Invertir.
+    if cv2.countNonZero(binary) < (binary.size / 2):
+        binary = cv2.bitwise_not(binary)
+
+    # 5. Padding (Añadir borde blanco seguro)
+    binary = cv2.copyMakeBorder(binary, 10, 10, 10, 10, cv2.BORDER_CONSTANT, value=255)
+
+    return binary
+
+def limpiar_texto_dinero(texto_crudo):
+    """
+    Convierte basura de OCR ("$ 1,200.oo") en float limpio (1200.0)
+    """
+    if not texto_crudo: return 0.0
+    
+    # Normalizar: minúsculas y reemplazar comas por puntos (o quitarlas)
+    texto = texto_crudo.lower().replace(' ', '').replace('o', '0').replace('l', '1')
+    
+    # Manejar sufijos de póker (k = mil, m = millón)
+    multiplicador = 1.0
+    if 'k' in texto: 
+        multiplicador = 1000.0
+        texto = texto.replace('k', '')
+    elif 'm' in texto: 
+        multiplicador = 1000000.0
+        texto = texto.replace('m', '')
+    elif 'bb' in texto: # Si el soft muestra ciegas
+        return 0.0 # O manejar lógica de BB
+
+    # Regex: Extraer solo números y punto decimal
+    # Busca la secuencia numérica más larga
+    match = re.search(r"(\d+(?:[\.,]\d+)?)", texto)
+    
+    if match:
+        str_num = match.group(1)
+        # Si tiene coma y punto (1,200.50), quitar la coma
+        if ',' in str_num and '.' in str_num:
+            str_num = str_num.replace(',', '')
+        # Si solo tiene coma (1,200), asumimos que es separador de miles si son 3 dígitos
+        elif ',' in str_num:
+            str_num = str_num.replace(',', '.') # Cuidado aquí con formatos europeos
+            
+        try:
+            return float(str_num) * multiplicador
+        except:
+            return 0.0
+            
+    return 0.0
+
+def leer_dinero_robusto(frame, coords):
+    """Pipeline completo de lectura"""
+    x1, y1, x2, y2 = map(int, coords)
+    
+    # Validación de coordenadas seguras
+    h_img, w_img = frame.shape[:2]
+    x1, y1 = max(0, x1), max(0, y1)
+    x2, y2 = min(w_img, x2), min(h_img, y2)
+    
+    recorte = frame[y1:y2, x1:x2]
+    
+    # FASE A: VISIÓN
+    img_procesada = preprocesar_imagen_dinero(recorte)
+    if img_procesada is None: return 0.0
+    
+    # OCR (Solo caracteres permitidos para evitar leer "A" como "4")
+    resultado = reader.readtext(img_procesada, allowlist='0123456789.,$kKmMBb', detail=0)
+    
+    if not resultado:
+        return 0.0
+    
+    # FASE B: LÓGICA
+    texto_detectado = resultado[0] # Tomamos el más probable
+    valor_float = limpiar_texto_dinero(texto_detectado)
+    
+    return valor_float
+
+
+
+
+
+
+# Sistema de coordenadas de posiciones detectadas por YOLO:
+
+def ordenar_asientos_por_angulo(centro_mesa, stacks):
+    """
+    Ordena los stacks detectados en sentido horario empezando desde las 12 (arriba).
+    Esto garantiza que el 'Jugador 0' siempre sea el mismo visualmente.
+    """
+    def calcular_angulo(punto):
+        dx = punto[0] - centro_mesa[0]
+        dy = punto[1] - centro_mesa[1]
+        # Atan2 devuelve el ángulo en radianes
+        angulo = math.atan2(dy, dx)
+        return angulo
+
+    # Ordenamos la lista de tuplas (x,y) basándonos en su ángulo
+    return sorted(stacks, key=calcular_angulo)
+
+# --- USO EN TU BUCLE ---
+
+# 1. Definir el centro de la mesa (aprox)
+centro_mesa = (frame.shape[1] / 2, frame.shape[0] / 2)
+
+# 2. Una vez que tienes todos los 'posiciones_stacks' detectados por YOLO:
+asientos_ordenados = ordenar_asientos_por_angulo(centro_mesa, posiciones_stacks)
+
+# 3. Ahora sí:
+# asientos_ordenados[0] -> Siempre será el jugador de más a la derecha/abajo (según atan2)
+# asientos_ordenados[1] -> El siguiente a su izquierda...
+
+
+
+
+# Aplicaremos dos modos de frecuencia:
+
+Modo Vigilancia (Idle): 5 FPS. Solo busca hero_active (botones).
+
+Modo Acción (Active): 30 FPS. Ejecuta OCR, YOLO completo y Estrategia.
+
+
+Incluir la lógica de "Dormir/Despertar" (Con Trigger).
+
+# Estado del turno anterior para evitar repetir la misma acción
+era_mi_turno = False
+
+while True:
+    frame = camera.get_latest_frame()
+    
+    # 1. Inferencia Rápida (Solo buscamos el gatillo)
+    # Usamos conf=0.6 para estar seguros de que son los botones
+    results = model(frame, stream=True, conf=0.6)
+    
+    es_mi_turno_ahora = False
+    
+    # Escaneo preliminar rápido
+    for r in results:
+        # Check rápido si la clase 'hero_action' está presente
+        # (Esto asume que el ID de 'hero_action' es conocido o lo buscas por nombre)
+        for box in r.boxes:
+            cls_id = int(box.cls[0])
+            nombre = model.names[cls_id]
+            if nombre == 'hero_active': # O el nombre que le pongas a los botones
+                es_mi_turno_ahora = True
+                break
+    
+    # 2. LÓGICA DEL GATILLO
+    if es_mi_turno_ahora:
+        if not era_mi_turno:
+            print("¡DESPERTANDO! Es mi turno. Iniciando análisis completo...")
+            
+            # --- AQUÍ EJECUTAS TODO EL CÓDIGO PESADO ---
+            # 1. Leer Stacks (OCR)
+            # 2. Leer Cartas (Parsing)
+            # 3. Calcular Probabilidades (Eval7)
+            # 4. Enviar a web.
+            
+            # (Pega aquí la lógica que escribimos en la respuesta anterior)
+            
+        era_mi_turno = True # Marcamos para no re-calcular en el siguiente frame
+        
+    else:
+        if era_mi_turno:
+            print("Turno finalizado. Entrando en modo reposo.")
+            # Opcional: Enviar mensaje a tablet "Esperando..."
+            
+        era_mi_turno = False
+        # Dormir un poco para ahorrar batería/CPU
+        time.sleep(0.1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+19. Ejemplo a mejorar del archivo / modulo de deteccion de errores "errores.py":
+
+
+
+
+
+Deteccion del problema mas recurrente:
+
+import dxcam
+import numpy as np
+import cv2
+import time
+
+def verificar_vision():
+    # Inicializar cámara (DXcam)
+    camera = dxcam.create(output_color="BGR")
+    camera.start(target_fps=60)
+    
+    print("👁️ Iniciando prueba de visión...")
+    print("Por favor, pon la mesa de póker en pantalla visible.")
+    time.sleep(2) # Tiempo para que acomodes la ventana
+
+    try:
+        while True:
+            frame = camera.get_latest_frame()
+            if frame is None: continue
+
+            # --- LÓGICA DE DETECCIÓN DE PANTALLA NEGRA ---
+            
+            # 1. Calcular el promedio de brillo de la imagen
+            promedio_brillo = np.mean(frame)
+            
+            # 2. Calcular la desviación estándar (¿Hay variedad de colores?)
+            desviacion = np.std(frame)
+
+            # --- DIAGNÓSTICO ---
+            
+            # Umbral: Si el brillo promedio es menor a 5 (sobre 255), es negro absoluto
+            if promedio_brillo < 5 and desviacion < 5:
+                estado = " PANTALLA NEGRA (PROTEGIDA/MINIMIZADA)"
+                color_texto = (0, 0, 255) # Rojo
+            else:
+                estado = f" VISIÓN CORRECTA (Brillo: {promedio_brillo:.1f})"
+                color_texto = (0, 255, 0) # Verde
+
+            # Mostrar en ventana de prueba
+            cv2.putText(frame, estado, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, color_texto, 2)
+            cv2.imshow("Prueba de Vision (Q para salir)", frame)
+
+            if cv2.waitKey(1) == ord('q'):
+                break
+                
+    except KeyboardInterrupt:
+        pass
+    finally:
+        camera.stop()
+        cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    verificar_vision()
+
+
+
+
+
+
+
+
+
+
+
+
+20. Módulo de interfaz: Arquitectura "Invisible" o Air-Gapped (con brecha de aire) "HTPGUI.py" FastAPI + WebSocket:
+
+La interfaz debe ser implementada en un Servidor Web Local (FastAPI): Esta es la arquitectura "Invisible" o Air-Gapped (con brecha de aire). Es la más segura porque la interfaz gráfica no existe en tu PC de juego, sino en un dispositivo externo. El cliente de póker no puede ver lo que hay en la pantalla de tu móvil.
+
+Necesitamos un servidor asíncrono que pueda manejar la captura de pantalla pesada y la comunicación web simultáneamente. Usaremos FastAPI y Uvicorn.
+
+Crea un archivo simple llamado interface.html. No necesitas internet para que funcione, solo tu red local.
+
+la versión final de HTPGUI.py:
+No inicializa dxcam, ni YOLO, ni EasyOCR.
+No tiene su propio game_loop.
+Se limita a:
+Montar FastAPI + WebSocket.
+Leer de SharedState["decision"], SharedState["game_state"], SharedState["vision_ok"], etc.
+Exponer un endpoint para:
+Enviar SharedState a la interfaz web.
+Recibir comandos como “guardar_error” u otros.
+
+
+Con ventana compacta que muestre en tiempo real:
+
+La informacion detectada en el juego
+
+La impresion de forma dinamica en todo momento el mejor curso de accion posible para ganar la partida mediante informacion post analisis pertinente, ejemplo: "Equity: 65%", "Dato Psicológico (Rival: FLOJO)". "Acción Sugerida: RAISE". 
+
+Estados del OCR. (si esta inactivo o no se detecta la ventana explicar por que). Que diga si se detecta la ventana del juego. (se presume que si esta abierto el software esta abierta tambien la ventana de juego, si no se detecta determinar motivo).
+
+Se debe poder seleccionar manualmente la ventana de la mesa de poker para analizar, tambien se debe poder hacer un screenshot a la misma con motivos de prueba y evaluacion, este screenshot debe ser tomado con todas las caracteristicas anti deteccion utilizadas por el OCR. Definir endpoint recomendado.
+
+En caso que algo falle debera existir un boton de registro de errores que al presionarlo guarde un log o screenshots de los errores para su correccion.
+
+Se deben visualizar las lecturas de las cartas con suit symbols del color correspondiente.
+
+Usar icono que se encuentra en la carpeta de los archivos creados nombrado icoRGB.ico
+
+El theme requerido para la GUI esta en: HTP\interface.css
+
+
+
+
+
+
+
+Utilizar Unicode Playing Cards (palos y colores). Mapeo eval7.Card → símbolo Unicode (♠, ♥, ♦, ♣) + color. Mostrar en GUI.
+
+
+
+
+
+
+
+
+21. Módulo de captura de imagen "input_handler.py":
+
+
+El plugin input_handler.py usará DXcam por defecto. La lógica de "HDMI" o "OBS" debe ser una configuración (config.json), no un módulo separado que compita. Las principales funciones son las siguientes:
+
+
+Captura de Escritorio (Desktop Duplication API): En lugar de intentar capturar una ventana específica, se puede utilizar la Desktop Duplication API de Windows. Esta API se diseñó para la duplicación de escritorio (ej. para streaming o proyectores) y tiene un nivel de privilegio más alto, a menudo eludiendo las restricciones de captura de ventana individuales, es decir una vez que se obtiene el frame del escritorio, se usa OpenCV/YOLO para recortar solo la parte que corresponde a la ventana del juego (utilizando las coordenadas obtenidas de tu sistema de calibración avanzado).
+
+
+
+input_handler.py:
+
+Usa dxcam para capturar toda la pantalla con Desktop Duplication API.
+Recorta según SharedState["window_rect"].
+Maneja errores típicos:
+Frame None.
+Pantalla negra (para usarlo junto con self_check_plugin).
+
+Se debe permitir alternar con los modulos BetterCam y WinCam.
+
+
+Con los parametros y tecnicas ya mencionados.
+
+
+
+
+
+
+
+
+
+
+
+
+22. Módulo OCR Y visión por computadora en el archivo de OCR advanced_ocr_plugin.py # EasyOCR + Limpieza de texto:
+
+Descripcion de funciones:
+
+“La lógica completa de OCR robusto (preprocesado, smoothing de buffer_ocr, etc.) se implementará EXCLUSIVAMENTE en el plugin advanced_ocr_plugin.py. vision_core.py sólo detecta dónde están pot_text, stack_text, bet_text y escribe sus coords en SharedState["detections"].”
+
+advanced_ocr_plugin.py: leera SharedState["frame"] + bounding boxes OCR de SharedState["detections"] y ahí implementa TODO el preprocesado y smoothing.
+
+
+Con los parametros y tecnicas ya mencionados.
+
+Usar whitelists, preprocess y filtros para mejorar
+
+El modelo debe ser capaz de distinguir todas las clases y toda la informacion registrada por YOLO.
+
+
+Debe capturar:
+
+A) Informacion de las cartas (prioridad alta):
+
+Mis cartas (Hole Cards), a veces están parcialmente ocultas o inclinadas.
+
+Cartas Comunitarias (Board): Se debe detectar cuándo aparecen nuevas cartas para disparar una re-evaluación del motor.
+
+B) Información Financiera.
+
+El Bote Total (Total Pot), número central que indica cuánto dinero hay en juego, método: YOLO detecta la región -> OCR lee el número..
+
+Apuestas Actuales (Current Bets): las fichas o números frente a cada jugador activo en la calle actual (define el precio que debo pagar para ver la siguiente carta).
+
+Stacks de los Jugadores (Fichas): La cantidad total de dinero que tiene cada jugador detrás, para calcular el "Stack Efectivo" no se juega igual si el oponente tiene 10 ciegas grandes (All-in probable) que si tiene 100 ciegas grandes.
+
+C) Información de Estado y Posición (Lógica de Juego):
+
+Botón de Dealer (Dealer Button) el pequeño disco (usualmente marcado con una "D"). Determina quién habla primero y último. Es vital para los rangos de apertura.
+
+Estado de los Jugadores (Activo/Fold/Ausente): ¿El jugador tiene cartas? Lógica: Necesito saber contra cuántos oponentes juegas. Un Raise contra 5 jugadores es muy diferente a un Raise contra 1.
+
+Mi Turno (Hero Action): Determinado por la aparición de los botones de acción (Fold, Call, Raise) o la barra de tiempo, debe conllevar a un disparador (Trigger) para iniciar el análisis y sugerir la jugada.
+
+Debe calibrarse automaticamente.
+
+Configuracion adicional:
+
+
+Resumen del Flujo de Datos:
+
+Captura (DXcam): Obtiene la imagen cruda.
+
+YOLO: Dice "Aquí está el Bote", "Aquí está el Dealer", "Aquí hay un As de Picas".
+
+Lógica: Si YOLO ve el botón de "Tu Turno":
+
+Recorta el área del Bote y Stacks -> OCR lee los valores.
+
+Combina [Cartas] + [Posición Dealer] + [Ciegas] + [Dinero] .
+
+Envía todo al Motor de Probabilidad.
+
+
+
+Ejemplo a mejorar del archivo de OCR advanced_ocr_plugin.py # EasyOCR + Limpieza de texto:
+
+
+# Historial para suavizado de datos (Smoothing)
+# Estructura: 'stack_text_3': [100.0, 100.0, 100.0, 5000.0(Error), 100.0]
+buffer_ocr = {} 
+
+# ... DENTRO DEL BUCLE DE DETECCIÓN ...
+
+    if nombre in OCR_LABELS:
+        valor_raw = leer_dinero_robusto(frame, coords)
+        
+        # ID único para este objeto (basado en posición aproximada)
+        # Esto sirve para saber que estamos leyendo SIEMPRE el mismo stack
+        obj_id = f"{nombre}_{int(coords[0]/50)}_{int(coords[1]/50)}"
+        
+        if obj_id not in buffer_ocr:
+            buffer_ocr[obj_id] = []
+            
+        # Agregar al buffer (máximo 5 lecturas)
+        buffer_ocr[obj_id].append(valor_raw)
+        if len(buffer_ocr[obj_id]) > 5:
+            buffer_ocr[obj_id].pop(0)
+            
+        # VALIDACIÓN HEURÍSTICA: Usar la MEDIANA
+        # La mediana ignora valores locos.
+        # Si el buffer es [100, 100, 9999, 100, 100], la media sería alta, la mediana es 100.
+        valor_validado = np.median(buffer_ocr[obj_id])
+        
+        # Usar 'valor_validado' para tu lógica de juego
+
+
+
+
+
+# ==========================================
+# FUNCIONES AUXILIARES (VISIÓN Y LÓGICA)
+# ==========================================
+
+def leer_dinero_robusto(frame, coords):
+    """Pipeline de OCR: Recorte -> Upscale -> Threshold -> EasyOCR"""
+    x1, y1, x2, y2 = map(int, coords)
+    h, w = frame.shape[:2]
+    x1, y1, x2, y2 = max(0, x1), max(0, y1), min(w, x2), min(h, y2)
+    
+    recorte = frame[y1:y2, x1:x2]
+    if recorte.size == 0: return 0.0
+
+    # Upscaling x3 y Binarización
+    img = cv2.resize(recorte, (0,0), fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    
+    # Invertir si es necesario (letras claras fondo oscuro)
+    if cv2.countNonZero(thresh) < (thresh.size / 2):
+        thresh = cv2.bitwise_not(thresh)
+
+    res = reader.readtext(thresh, allowlist='0123456789.$kKmMBb', detail=0)
+    if not res: return 0.0
+    
+    try:
+        txt = res[0].lower().replace(',', '.')
+        mult = 1000 if 'k' in txt else (1000000 if 'm' in txt else 1)
+        val = float(re.sub(r"[^\d\.]", "", txt)) * mult
+        return val
+    except:
+        return 0.0
+
+def detectar_mesa_y_dealer(puntos_stacks, pos_dealer_btn, w, h):
+    """Retorna (Tamaño Mesa, Índice del Dealer 0-N)"""
+    # 1. Tamaño (4, 6, 8, 9)
+    es_9max = False
+    for x, y in puntos_stacks:
+        xn, yn = x/w, y/h
+        for z in ZONAS_9MAX:
+            if z[0] < xn < z[2] and z[1] < yn < z[3]:
+                es_9max = True; break
+    
+    cant = len(puntos_stacks)
+    size = 9 if (es_9max or cant > 6) else 6
+    
+    # 2. Quién es el dealer (Stack más cercano al botón)
+    idx_dealer = -1
+    if pos_dealer_btn and puntos_stacks:
+        dist_min = float('inf')
+        for i, stack in enumerate(puntos_stacks):
+            d = math.sqrt((stack[0]-pos_dealer_btn[0])**2 + (stack[1]-pos_dealer_btn[1])**2)
+            if d < dist_min:
+                dist_min = d
+                idx_dealer = i
+                
+    return size, idx_dealer
+
+
+
+
+
+
+
+23. Cosas adicionales a tener en cuenta:
+
+No analizar la ventana de lobby de software de poker.
+
+La ventana de la mesa usa nombres como "Mesa", "Green", "holdem", "Tournament", "Freeroll", "Ciegas", etc. 
+
+
+
+
+
+
+Entonces:
+
+A) Genera por pasos primero el primer archivo del proyecto "HTP.py" teniendo en cuenta todos los parametros y enfocandose en resolver los problemas presentados. Determina cuales plugins se van a utilizar en el comienzo y deja espacio en el codigo por si se quiere agregar alguno, priorizar una eficiente distribucion de plugins. Los codigos de ejemplo mencionados anteriormente pueden tener errores de sintaxis u otros, siempre mejorarlos y adaptarlos para que sean funcionales.
+B) Luego te pedire "config.json", luego ".spec") y luego construiremos 1 a 1 los siguientes plugins iniciales en la carpeta \HTP\plugins
+
+input_handler.py           # DXcam / Detección de Ventana
+vision_core.py             # YOLO + Lógica de Mesa (Dealer/Cartas)
+advanced_ocr_plugin.py     # EasyOCR + Limpieza de texto
+window_detector_plugin.py
+main_player_decisions.py   # (que use PreflopBrain + PostflopBrain + PlayerProfile)
+self_check_plugin.py       # (autodiagnóstico con verificar_vision, check de dependencias, etc.)
+blinds_detector.py
+errores.py
+HTPGUI.py                  # FastAPI + WebSocket 
+
+Luego insertaremos mediante un comando los archivos __init__.py y otros que sean necesarios.
+
+C) Completa las librerias faltantes de las secciones de codigo provistas.
+D) Genera instrucciones precisas para su compilacion e instalacion paso a paso sin virtual enviroment.
+E) Dime tu opinion directa sobre el software, posibles mejoras, falencias, etc.
+
+
+
+
+
+
