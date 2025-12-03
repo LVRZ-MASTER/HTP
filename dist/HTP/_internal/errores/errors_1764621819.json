@@ -1,3 +1,0 @@
-[
-  "Error en plugin 'vision_core': model='C:\\HTP\\yoloDS\\runs\\detect\\HTP_v11_final\\weights\\best_openvino_model\\best.xml' is not a supported model format. Ultralytics supports: ('PyTorch', 'TorchScript', 'ONNX', 'OpenVINO', 'TensorRT', 'CoreML', 'TensorFlow SavedModel', 'TensorFlow GraphDef', 'TensorFlow Lite', 'TensorFlow Edge TPU', 'TensorFlow.js', 'PaddlePaddle', 'MNN', 'NCNN', 'IMX', 'RKNN', 'ExecuTorch')\nSee https://docs.ultralytics.com/modes/predict for help."
-]
